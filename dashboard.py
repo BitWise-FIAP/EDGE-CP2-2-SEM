@@ -13,8 +13,8 @@ DASH_HOST = "0.0.0.0"  # Set this to "0.0.0.0" to allow access from any IP
 
 
 # Function to get luminosity data from the API
-def get_luminosity_data(lastN):
-    url = f"http://{IP_ADDRESS}:{PORT_STH}/STH/v1/contextEntities/type/Lamp/id/urn:ngsi-ld:Lamp:bit/attributes/luminosity?lastN={lastN}"
+def get_data(lastN,context):
+    url = f"http://{IP_ADDRESS}:{PORT_STH}/STH/v1/contextEntities/type/Lamp/id/urn:ngsi-ld:Lamp:bit/attributes/{context}?lastN={lastN}"
     headers = {
         'fiware-service': 'smart',
         'fiware-servicepath': '/'
@@ -73,18 +73,14 @@ app.layout = html.Div([
     State('luminosity-data-store', 'data')
 )
 def update_data_store(n, stored_data):
-    # Get luminosity data
-    data_luminosity = get_luminosity_data(lastN)
+    data = get_data(lastN,"luminosity")
 
-    if data_luminosity:
-        # Extract values and timestamps
-        luminosity_values = [float(entry['attrValue']) for entry in data_luminosity]  # Ensure values are floats
-        timestamps = [entry['recvTime'] for entry in data_luminosity]
+    if data:
+        luminosity_values = [float(entry['attrValue']) for entry in data]  # Ensure values are floats
+        timestamps = [entry['recvTime'] for entry in data]
 
-        # Convert timestamps to Lisbon time
         timestamps = convert_to_lisbon_time(timestamps)
 
-        # Append new data to stored data
         stored_data['timestamps'].extend(timestamps)
         stored_data['luminosity_values'].extend(luminosity_values)
 
@@ -92,6 +88,10 @@ def update_data_store(n, stored_data):
 
     return stored_data
 
+@app.callback(
+    Output('humidity-graph', 'figure'),
+    Input('humidity-data-store', 'data')
+)
 
 @app.callback(
     Output('luminosity-graph', 'figure'),
